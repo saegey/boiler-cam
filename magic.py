@@ -85,7 +85,7 @@ bounding_box_system_temp_standby = (1025, 332, 1179, 402) # (x1, y1, x2, y2)
 
 
 sensor_bounding_boxes = {
-    "run %": (293, 28, 407, 103),
+    "run_percentage": (293, 28, 407, 103),
     "flame": (964, 37, 1177, 109),
     "outlet temp": (1018, 182, 1186, 259),
     "inlet temp": (1025, 258, 1183, 328),
@@ -170,7 +170,7 @@ if detected_text != "STANDBY":
             text_stripped = text.strip()
 
         # Always enhance for specific keys
-        if sensor_name in ["flame", "run %"]:
+        if sensor_name in ["flame", "run_percentage"]:
             print(f"Always enhancing for '{sensor_name}'...")
             enhanced_results = enhance_and_rerun_ocr(cropped_sensor, allowlist='0123456789.%')
             if enhanced_results:
@@ -182,7 +182,7 @@ if detected_text != "STANDBY":
                 print(f"No enhanced OCR result for '{sensor_name}'. Using initial OCR results.")
 
         # Special handling for "run %" to mark as "invalid" if below 10%
-        if sensor_name == "run %":
+        if sensor_name == "run_percentage":
             try:
                 run_percentage = float(text_stripped.replace('%', ''))  # Remove '%' and convert to float
                 if run_percentage < 10:
