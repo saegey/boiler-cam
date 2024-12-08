@@ -1,5 +1,6 @@
 #!/bin/bash
 USER="saegey"
+set +e
 source /home/saegey/boiler-cam/venv/bin/activate
 # Paths
 PHOTO_DIR="/home/$USER/photos"
