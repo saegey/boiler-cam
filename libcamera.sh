@@ -2,10 +2,10 @@
 USER="saegey"
 source /home/saegey/boiler-cam/venv/bin/activate
 # Paths
-PHOTO_DIR="/home/" + USER + "/photos"
-SCRIPT_DIR="/home/" + USER + "/bin"
-LOG_FILE="/home/" + USER + "/logfile.log"
-PYTHON_SCRIPT="${SCRIPT_DIR}/final_with_epoch_and_eroded.py"
+PHOTO_DIR="/home/$USER/photos"
+SCRIPT_DIR="/home/$USER/bin"
+LOG_FILE="/home/$USER/logfile.log"
+PYTHON_SCRIPT="${SCRIPT_DIR}/magic.py"
 HA_UPDATE_SCRIPT="${SCRIPT_DIR}/update_home_assistant.py"
 
 # Take a photo with timestamped filename
