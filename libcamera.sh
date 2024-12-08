@@ -3,7 +3,7 @@ USER="saegey"
 source /home/saegey/boiler-cam/venv/bin/activate
 # Paths
 PHOTO_DIR="/home/$USER/photos"
-SCRIPT_DIR="/home/$USER/bin"
+SCRIPT_DIR="/home/$USER"
 LOG_FILE="/home/$USER/logfile.log"
 PYTHON_SCRIPT="${SCRIPT_DIR}/magic.py"
 HA_UPDATE_SCRIPT="${SCRIPT_DIR}/update_home_assistant.py"
@@ -17,6 +17,8 @@ libcamera-still -o "${image_file}"
 echo "$(date): Captured image: ${image_file}" >>"${LOG_FILE}"
 
 # Run the Python script on the captured image
+echo "$(date): Running Python script: ${PYTHON_SCRIPT}" >>"${LOG_FILE}"
+
 python_output=$("${PYTHON_SCRIPT}" "${image_file}" 2>&1)
 python_exit_code=$?
 
