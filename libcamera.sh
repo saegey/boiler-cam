@@ -29,7 +29,7 @@ echo "$(date): Captured image: ${image_file}" >>"${LOG_FILE}"
 # Run the Python script on the captured image
 echo "$(date): Running Python script: ${PYTHON_SCRIPT}" >>"${LOG_FILE}"
 
-python_output=$("${PYTHON_SCRIPT}" "${image_file}" 2>&1)
+python_output=$(python "${PYTHON_SCRIPT}" "${image_file}" 2>&1)
 python_exit_code=$?
 
 # Log the Python script output
@@ -48,7 +48,7 @@ if [[ -z "${json_file}" ]]; then
 fi
 
 # Run the Home Assistant update script with the JSON file
-ha_output=$("${HA_UPDATE_SCRIPT}" "${json_file}" 2>&1)
+ha_output=$("python ${HA_UPDATE_SCRIPT}" "${json_file}" 2>&1)
 ha_exit_code=$?
 
 # Log the Home Assistant script output
