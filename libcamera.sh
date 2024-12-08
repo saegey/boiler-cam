@@ -11,7 +11,16 @@ HA_UPDATE_SCRIPT="${SCRIPT_DIR}/update_home_assistant.py"
 # Take a photo with timestamped filename
 timestamp=$(date +%s)
 image_file="${PHOTO_DIR}/image-${timestamp}.jpg"
+
 libcamera-still -o "${image_file}"
+capture_exit_code=$?
+
+echo "$(date): libcamera-still exit code: ${capture_exit_code}" >>"${LOG_FILE}"
+
+if [[ ${capture_exit_code} -ne 0 ]]; then
+	echo "$(date): libcamera-still failed with exit code ${capture_exit_code}" >>"${LOG_FILE}"
+	exit 1
+fi
 
 # Log the photo capture
 echo "$(date): Captured image: ${image_file}" >>"${LOG_FILE}"
