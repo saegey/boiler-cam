@@ -1,9 +1,10 @@
 #!/bin/bash
-
+USER="saegey"
+source /home/saegey/boiler-cam/venv/bin/activate
 # Paths
-PHOTO_DIR="/home/saegey/photos"
-SCRIPT_DIR="/home/saegey/bin"
-LOG_FILE="/home/saegey/logfile.log"
+PHOTO_DIR="/home/" + USER + "/photos"
+SCRIPT_DIR="/home/" + USER + "/bin"
+LOG_FILE="/home/" + USER + "/logfile.log"
 PYTHON_SCRIPT="${SCRIPT_DIR}/final_with_epoch_and_eroded.py"
 HA_UPDATE_SCRIPT="${SCRIPT_DIR}/update_home_assistant.py"
 
