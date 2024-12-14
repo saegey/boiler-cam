@@ -1,3 +1,8 @@
 venv/
 tmp/
 debug/
+output_characters_with_buffers/
+classified_images/
+test/
+chop_debug/
+data/

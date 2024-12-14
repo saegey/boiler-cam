@@ -1,3 +1,8 @@
 numpy==1.23.5
 opencv-python-headless==4.10.0.84
 easyocr
+pytesseract
+Pillow
+tensorflow
+keras
+scikit-learn
