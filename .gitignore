@@ -6,3 +6,6 @@ classified_images/
 test/
 chop_debug/
 data/
+data_alpha/
+.DS_Store
+output_characters/

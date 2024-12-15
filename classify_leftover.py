@@ -5,7 +5,7 @@ import shutil
 from PIL import Image
 import matplotlib.pyplot as plt
 
-def classify_with_model(model_path, input_folder, output_folder, image_size=(61, 83), confidence_threshold=0.00):
+def classify_with_model(model_path, input_folder, output_folder, image_size=(61, 83), confidence_threshold=0.9):
     """
     Classifies images using a trained model and organizes them into folders by predicted class,
     only if confidence exceeds the given threshold.
@@ -46,21 +46,21 @@ def classify_with_model(model_path, input_folder, output_folder, image_size=(61,
         confidences.append(confidence)  # Track confidence score
 
         # Only classify images with confidence above the threshold
-        # if confidence >= confidence_threshold:
+        if confidence >= confidence_threshold:
             # Get class label (e.g., 0-9, A-Z)
-        class_label = f"{predicted_class}"
+            class_label = f"{predicted_class}"
 
-        # Create folder for the predicted class
-        class_folder = os.path.join(output_folder, class_label)
-        os.makedirs(class_folder, exist_ok=True)
+            # Create folder for the predicted class
+            class_folder = os.path.join(output_folder, class_label)
+            os.makedirs(class_folder, exist_ok=True)
 
-        # Move the image to the appropriate folder
-        destination_path = os.path.join(class_folder, image_file)
-        shutil.move(image_path, destination_path)
+            # Move the image to the appropriate folder
+            destination_path = os.path.join(class_folder, image_file)
+            shutil.move(image_path, destination_path)
 
-        print(f"Classified '{image_file}' as '{class_label}' with confidence {confidence:.2f}.")
-        # else:
-        #     print(f"Skipped '{image_file}' due to low confidence ({confidence:.2f}).")
+            print(f"Classified '{image_file}' as '{class_label}' with confidence {confidence:.2f}.")
+        else:
+            print(f"Skipped '{image_file}' due to low confidence ({confidence:.2f}).")
 
     # Plot confidence score distribution
     plt.hist(confidences, bins=20, range=(0, 1), edgecolor='black')
@@ -75,8 +75,8 @@ def classify_with_model(model_path, input_folder, output_folder, image_size=(61,
 if __name__ == "__main__":
     # Paths
     model_path = "digit_recognition_model.h5"  # Path to your trained model
-    input_folder = "output_characters_with_buffers"  # Folder with leftover images
+    input_folder = "output_characters"  # Folder with leftover images
     output_folder = "classified_images"  # Folder to store classified images
 
     # Classify leftover images
-    classify_with_model(model_path, input_folder, output_folder, confidence_threshold=0.00)
+    classify_with_model(model_path, input_folder, output_folder, confidence_threshold=0.92)

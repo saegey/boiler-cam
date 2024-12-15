@@ -3,8 +3,13 @@ import os
 import sys
 import re
 
-# Define the rows to include (0-indexed, skipping the 2nd and last rows)
-include_rows = [0, 2, 3, 4]  # Rows to keep (excluding 1 and 5)
+# Define the specific cells (row, columns) to export
+include_cells = {
+    0: [4, 5, 16, 17, 19],
+    2: [17, 18, 19],
+    3: [17, 18, 19],
+    4: [18, 19, 20, 14, 13, 12],
+}
 
 def extract_epoch_from_filename(filename):
     """Extract the epoch timestamp from the filename."""
@@ -14,7 +19,7 @@ def extract_epoch_from_filename(filename):
     return "unknown"
 
 def process_image(image_path, output_folder, debug_folder, left_buffer=-8, top_buffer=-4):
-    """Processes a single image to add a grid with buffers and save chopped images."""
+    """Processes a single image to export specified grid sections."""
     # Load the image
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
@@ -42,14 +47,14 @@ def process_image(image_path, output_folder, debug_folder, left_buffer=-8, top_b
     os.makedirs(output_folder, exist_ok=True)
     os.makedirs(debug_folder, exist_ok=True)
 
-    # Loop through the selected rows and all columns to save each character
-    for row in include_rows:
-        for col in range(cols):
+    # Loop through the defined cells
+    for row, cols in include_cells.items():
+        for col in cols:
             # Calculate cell boundaries with buffers
             x_start = max(0, col * cell_width - left_buffer)  # Ensure x_start is not negative
-            x_end = x_start + cell_width
+            x_end = min(width, x_start + cell_width)          # Ensure x_end doesn't exceed image width
             y_start = max(0, row * cell_height - top_buffer)  # Ensure y_start is not negative
-            y_end = y_start + cell_height
+            y_end = min(height, y_start + cell_height)        # Ensure y_end doesn't exceed image height
 
             # Draw the grid on the visualization image
             cv2.rectangle(grid_image, (x_start, y_start), (x_end, y_end), (0, 255, 0), 1)
@@ -60,6 +65,7 @@ def process_image(image_path, output_folder, debug_folder, left_buffer=-8, top_b
             # Save the character image with epoch in the filename
             output_path = os.path.join(output_folder, f"{epoch}_char_{row}_{col}.jpg")
             cv2.imwrite(output_path, character)
+            print(f"Exported: {output_path}")
 
     # Save and display the grid visualization
     grid_image_path = os.path.join(debug_folder, f"{epoch}_grid_visualization.jpg")
@@ -77,9 +83,9 @@ def main():
         print(f"Error: File '{image_path}' not found.")
         sys.exit(1)
 
-    # Specify the output folder for chopped images
-    output_folder = "output_characters_with_buffers"
-    debug_folder = "chop_debug"
+    # Specify the output folder for exported images
+    output_folder = "output_characters"
+    debug_folder = "debug"
 
     # Process the image
     process_image(image_path, output_folder, debug_folder)

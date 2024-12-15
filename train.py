@@ -34,7 +34,7 @@ model = models.Sequential([
     layers.Flatten(),
     layers.Dense(128, activation='relu'),
     layers.Dropout(0.5),  # Add dropout for regularization
-    layers.Dense(25, activation='softmax')  # Output layer for 25 classes
+    layers.Dense(10, activation='softmax')  # Output layer for 25 classes
 ])
 
 # Compile the model
