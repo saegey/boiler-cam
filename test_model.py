@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the model
-model = tf.keras.models.load_model('digit_recognition_model.h5')
+model = tf.keras.models.load_model('digit_recognition_model.keras')
 
 # Load test data
 test_ds = tf.keras.preprocessing.image_dataset_from_directory(

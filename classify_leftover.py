@@ -74,9 +74,9 @@ def classify_with_model(model_path, input_folder, output_folder, image_size=(61,
 
 if __name__ == "__main__":
     # Paths
-    model_path = "digit_recognition_model.h5"  # Path to your trained model
+    model_path = "digit_recognition_model.keras"  # Path to your trained model
     input_folder = "output_characters"  # Folder with leftover images
     output_folder = "classified_images"  # Folder to store classified images
 
     # Classify leftover images
-    classify_with_model(model_path, input_folder, output_folder, confidence_threshold=0.92)
+    classify_with_model(model_path, input_folder, output_folder, confidence_threshold=0.80)
