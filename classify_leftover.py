@@ -79,4 +79,4 @@ if __name__ == "__main__":
     output_folder = "classified_images"  # Folder to store classified images
 
     # Classify leftover images
-    classify_with_model(model_path, input_folder, output_folder, confidence_threshold=0.80)
+    classify_with_model(model_path, input_folder, output_folder, confidence_threshold=0.95)

@@ -8,11 +8,13 @@ model = tf.keras.models.load_model('digit_recognition_model.keras')
 # Load test data
 test_ds = tf.keras.preprocessing.image_dataset_from_directory(
     "test",
-    image_size=(61, 83),
+    image_size=(83, 61),
     batch_size=32,
     color_mode='grayscale',
     label_mode='categorical'
 )
+
+test_ds = test_ds.map(lambda x, y: (x / 255.0, y))
 
 # Evaluate the model on test data
 test_loss, test_accuracy = model.evaluate(test_ds)
