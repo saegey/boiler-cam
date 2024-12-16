@@ -3,8 +3,9 @@ import numpy as np
 import os
 import sys
 import json
-import easyocr
+import pytesseract
 import re
+from PIL import Image
 
 if len(sys.argv) < 2:
     print("Usage: python final_with_epoch_and_eroded.py <image_filename>")
@@ -53,23 +54,31 @@ rotated_image = cv2.warpAffine(cropped_image, rotation_matrix, (w_c, h_c), borde
 
 # Convert to grayscale and apply Gaussian Blur + adaptive threshold
 gray_image = cv2.cvtColor(rotated_image, cv2.COLOR_BGR2GRAY)
-blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
+blurred_image = cv2.GaussianBlur(gray_image, (11, 11), 0)
+
+
+blurred_image_path = os.path.join(debug_folder, f"{epoch_timestamp}_blur_image.jpg")
+cv2.imwrite(blurred_image_path, blurred_image)
+
 grid_bw_image = cv2.adaptiveThreshold(
     blurred_image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
     cv2.THRESH_BINARY, 41, 5
 )
 
+grid_bw_image_path = os.path.join(debug_folder, f"{epoch_timestamp}_grid_bw_image.jpg")
+cv2.imwrite(grid_bw_image_path, grid_bw_image)
+
 # Morphological opening
-kernel = np.ones((7, 7), np.uint8)
-morph_grid_bw_image = cv2.morphologyEx(grid_bw_image, cv2.MORPH_OPEN, kernel)
+# kernel = np.ones((7, 7), np.uint8)
+# morph_grid_bw_image = cv2.morphologyEx(grid_bw_image, cv2.MORPH_OPEN, kernel)
 
 # Morphological closing
-kernel = np.ones((6, 6), np.uint8)
-closed_image = cv2.morphologyEx(morph_grid_bw_image, cv2.MORPH_CLOSE, kernel)
+# kernel = np.ones((3, 3), np.uint8)
+# closed_image = cv2.morphologyEx(morph_grid_bw_image, cv2.MORPH_CLOSE, kernel)
 
 # Erosion
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-eroded_image = cv2.erode(closed_image, kernel, iterations=1)
+eroded_image = cv2.erode(grid_bw_image, kernel, iterations=4)
 
 # Save the eroded image in the debug folder with epoch prefix
 eroded_image_path = os.path.join(debug_folder, f"{epoch_timestamp}_eroded_image.jpg")
@@ -83,7 +92,6 @@ print(f"Eroded image saved: {eroded_image_path}")
 bounding_box_standby = (54, 29, 912, 106)
 bounding_box_system_temp_standby = (1025, 332, 1179, 402) # (x1, y1, x2, y2)
 
-
 sensor_bounding_boxes = {
     "run_percentage": (293, 28, 407, 103),
     "flame": (964, 37, 1177, 109),
@@ -94,17 +102,29 @@ sensor_bounding_boxes = {
 }
 
 # -----------------------
-# OCR Logic with EasyOCR
+# OCR Logic with Tesseract
 # -----------------------
-reader = easyocr.Reader(['en'], gpu=True)
+# Configure Tesseract to return data including confidence
+# You can specify the path to the Tesseract executable if it's not in PATH
+# Example for Windows:
+# pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-def ocr_crop(image, box, allowlist=None):
+def ocr_crop(image, box, config=''):
     x1, y1, x2, y2 = box
     cropped = image[y1:y2, x1:x2]
-    results = reader.readtext(cropped, allowlist=allowlist)
+    pil_image = Image.fromarray(cropped)
+    # Use pytesseract to get detailed data including confidence
+    data = pytesseract.image_to_data(pil_image, output_type=pytesseract.Output.DICT, config=config)
+    results = []
+    num_boxes = len(data['level'])
+    for i in range(num_boxes):
+        text = data['text'][i].strip()
+        conf = int(data['conf'][i])
+        if text:
+            results.append((data['left'][i], data['top'][i], data['width'][i], data['height'][i], text, conf))
     return results, cropped
 
-def enhance_and_rerun_ocr(cropped_image, allowlist=None):
+def enhance_and_rerun_ocr(cropped_image, config=''):
     # Check if cropped_image is already single-channel or empty
     if cropped_image is None or cropped_image.size == 0:
         print("Warning: Cropped image is empty or invalid. Skipping enhancement.")
@@ -121,34 +141,54 @@ def enhance_and_rerun_ocr(cropped_image, allowlist=None):
     _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
     cleaned = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-    results = reader.readtext(cleaned, allowlist=allowlist)
+
+    pil_image = Image.fromarray(cleaned)
+    data = pytesseract.image_to_data(pil_image, output_type=pytesseract.Output.DICT, config=config)
+    results = []
+    num_boxes = len(data['level'])
+    for i in range(num_boxes):
+        text = data['text'][i].strip()
+        conf = int(data['conf'][i])
+        if text:
+            results.append((data['left'][i], data['top'][i], data['width'][i], data['height'][i], text, conf))
     return results
 
+# Define Tesseract configuration
+# --oem 3: Default OCR Engine Mode
+# --psm 6: Assume a single uniform block of text
+# You can adjust psm based on your specific use case
+tess_config = '--oem 3 --psm 7'
 
 # Check STANDBY
-results, _ = ocr_crop(eroded_image, bounding_box_standby, allowlist='ABCDEFGHIJKLMNOPQRSTUVWXYZ-:.')
-detected_text = None
-for (bbox, text, confidence) in results:
-    detected_text = text.strip().upper()
+results, _ = ocr_crop(eroded_image, bounding_box_standby, config=tess_config + ' -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ-:.')
 
-    if detected_text == "STANDBY" or detected_text == "BLOCKED":
-        print("Detected 'STANDBY' in the standby region.")
+detected_text = None
+for result in results:
+    text = result[4].upper()
+    confidence = result[5]
+    detected_text = text.strip()
+
+    if detected_text in ["STANDBY", "BLOCKED"]:
+        print(f"Detected '{detected_text}' in the standby region.")
 
         # Process system temp for standby
-        results_temp, cropped_system_temp = ocr_crop(eroded_image, bounding_box_system_temp_standby, allowlist='0123456789.')
+        results_temp, cropped_system_temp = ocr_crop(eroded_image, bounding_box_system_temp_standby, config=tess_config + ' -c tessedit_char_whitelist=0123456789.')
 
         # If OCR fails, apply preprocessing and retry
         if not results_temp:
             print("No OCR results on initial system temp. Preprocessing...")
-            results_temp = enhance_and_rerun_ocr(cropped_system_temp, allowlist='0123456789.')
+            results_temp = enhance_and_rerun_ocr(cropped_system_temp, config=tess_config + ' -c tessedit_char_whitelist=0123456789.')
 
         system_temp_data = {}
         if results_temp:
-            (bbox_temp, text_temp, confidence_temp) = results_temp[0]
+            # Choose the result with the highest confidence
+            best_result = max(results_temp, key=lambda x: x[5])
+            text_temp = best_result[4].strip()
+            confidence_temp = best_result[5]
             system_temp_data = {
                 "status": detected_text,
                 "system temp": {
-                    "value": text_temp.strip(),
+                    "value": text_temp,
                     "confidence": confidence_temp
                 }
             }
@@ -163,36 +203,50 @@ for (bbox, text, confidence) in results:
 if detected_text != "STANDBY":
     print("No 'STANDBY' detected. Processing other sensor values...")
     sensor_data = {}
+    sensor_data["status"] = detected_text if detected_text else "UNKNOWN"
+
     for sensor_name, box in sensor_bounding_boxes.items():
-        results, cropped_sensor = ocr_crop(eroded_image, box, allowlist='0123456789.%')
+        # Define allowlist based on sensor type
+        whitelist = '0123456789.'
+
+        config = tess_config + f' -c tessedit_char_whitelist={whitelist}'
+
+        results, cropped_sensor = ocr_crop(eroded_image, box, config=config)
+        text_stripped = ""
+        confidence = 0
+
         if results:
-            (bbox, text, confidence) = results[0]
-            text_stripped = text.strip()
+            # Choose the result with the highest confidence
+            best_result = max(results, key=lambda x: x[5])
+            text_stripped = best_result[4].strip()
+            confidence = best_result[5]
 
         # Always enhance for specific keys
         if sensor_name in ["flame", "run_percentage"]:
             print(f"Always enhancing for '{sensor_name}'...")
-            enhanced_results = enhance_and_rerun_ocr(cropped_sensor, allowlist='0123456789.%')
+            enhanced_results = enhance_and_rerun_ocr(cropped_sensor, config=config)
             if enhanced_results:
-                (bbox_enh, text_enh, confidence_enh) = enhanced_results[0]
-                text_stripped = text_enh.strip()
-                confidence = confidence_enh
-                print(f"After enhancement: '{sensor_name}': {text_stripped} (Confidence: {confidence})")
+                best_enhanced = max(enhanced_results, key=lambda x: x[5])
+                text_enhanced = best_enhanced[4].strip()
+                confidence_enhanced = best_enhanced[5]
+                print(f"After enhancement: '{sensor_name}': {text_enhanced} (Confidence: {confidence_enhanced})")
+                text_stripped = text_enhanced
+                confidence = confidence_enhanced
             else:
                 print(f"No enhanced OCR result for '{sensor_name}'. Using initial OCR results.")
 
-        # Special handling for "run %" to mark as "invalid" if below 10%
+        # Special handling for "run_percentage" to mark as "invalid" if below 10%
         if sensor_name == "run_percentage":
             try:
                 run_percentage = float(text_stripped.replace('%', ''))  # Remove '%' and convert to float
                 if run_percentage < 10:
                     print(f"Run percentage below 10%: {run_percentage}. Marking as 'invalid'.")
                     text_stripped = "invalid"
-                    confidence = 1.0
+                    confidence = 100  # Assign a high confidence for manual review
             except ValueError:
                 print(f"Unable to parse run percentage: '{text_stripped}'. Marking as 'invalid'.")
                 text_stripped = "invalid"
-                confidence = 1.0
+                confidence = 100  # Assign a high confidence for manual review
 
         # Special handling for "flame" to add a decimal point if needed
         if sensor_name == "flame" and '.' not in text_stripped and text_stripped != "invalid":
@@ -210,11 +264,9 @@ if detected_text != "STANDBY":
         sensor_data[sensor_name] = {
             "value": text_stripped,
             "confidence": confidence,
-
         }
         print(f"{sensor_name}: {text_stripped} (Confidence: {confidence})")
 
-    sensor_data["status"] = detected_text
     output_file = os.path.join(debug_folder, f"{epoch_timestamp}_sensor_data.json")
     with open(output_file, "w") as f:
         json.dump(sensor_data, f, indent=4)
