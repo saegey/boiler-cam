@@ -1,11 +1,4 @@
 venv/
 tmp/
-debug/
-output_characters_with_buffers/
-classified_images/
-test/
-chop_debug/
 data/
-data_alpha/
 .DS_Store
-output_characters/

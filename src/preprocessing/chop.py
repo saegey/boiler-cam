@@ -4,12 +4,19 @@ import sys
 import re
 
 # Define the specific cells (row, columns) to export
+# include_cells = {
+#     0: [4, 5, 16, 17, 19],
+#     2: [17, 18, 19],
+#     3: [17, 18, 19],
+#     4: [18, 19, 20, 14, 13, 12],
+# }
 include_cells = {
-    0: [4, 5, 16, 17, 19],
-    2: [17, 18, 19],
-    3: [17, 18, 19],
-    4: [18, 19, 20, 14, 13, 12],
+    0: [0]
 }
+# include_cells = {
+#     # 0: [5],
+#     5: [7]
+# }
 
 def extract_epoch_from_filename(filename):
     """Extract the epoch timestamp from the filename."""
@@ -68,9 +75,9 @@ def process_image(image_path, output_folder, debug_folder, left_buffer=-8, top_b
             print(f"Exported: {output_path}")
 
     # Save and display the grid visualization
-    grid_image_path = os.path.join(debug_folder, f"{epoch}_grid_visualization.jpg")
-    cv2.imwrite(grid_image_path, grid_image)
-    print(f"Grid visualization saved: {grid_image_path}")
+    # grid_image_path = os.path.join(debug_folder, f"{epoch}_grid_visualization.jpg")
+    # cv2.imwrite(grid_image_path, grid_image)
+    # print(f"Grid visualization saved: {grid_image_path}")
 
 def main():
     """Main function to process an image passed as an argument."""
@@ -84,7 +91,7 @@ def main():
         sys.exit(1)
 
     # Specify the output folder for exported images
-    output_folder = "output_characters"
+    output_folder = "output_characters_alpha"
     debug_folder = "debug"
 
     # Process the image

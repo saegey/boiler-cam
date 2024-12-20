@@ -22,7 +22,7 @@ for img in "$INPUT_DIR"/*.jpg "$INPUT_DIR"/*.jpeg "$INPUT_DIR"/*.png; do
 	[ -e "$img" ] || continue
 
 	echo "Processing: $img"
-	python chop.py "$img"
+	python ../src/preprocessing/chop.py "$img"
 
 	# If you want to break on errors, you can check the exit status:
 	if [ $? -ne 0 ]; then

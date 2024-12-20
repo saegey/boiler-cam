@@ -17,7 +17,6 @@ train_ds = tf.keras.preprocessing.image_dataset_from_directory(
     # labels='categorical'
 )
 
-
 # Extract y_train
 y_train = []
 for batch in train_ds:
@@ -77,50 +76,13 @@ model = models.Sequential([
     layers.Dense(10, activation='softmax')
 ])
 
-# model = models.Sequential([
-#     layers.Input(shape=(61, 83, 1)),
-#     layers.Rescaling(1./255),
-#     data_augmentation,
-#     layers.Conv2D(32, (3, 3), activation='relu'),
-#     layers.MaxPooling2D((2, 2)),
-#     layers.Dropout(0.2),
-#     layers.Conv2D(64, (3, 3), activation='relu'),
-#     layers.MaxPooling2D((2, 2)),
-#     layers.Dropout(0.2),
-#     layers.Flatten(),
-#     layers.Dense(128, activation='relu'),
-#     layers.Dropout(0.3),
-#     layers.Dense(10, activation='softmax')
-# ])
-
-
 train_ds = train_ds.map(lambda x, y: (data_augmentation(x), y))
 train_ds = train_ds.shuffle(buffer_size=1000)
 
-# lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-#     initial_learning_rate=0.001,
-#     decay_steps=1000,
-#     decay_rate=0.96,
-#     staircase=True
-# )
-
-# normalized_weights = {
-#     0: 0.1007,
-#     1: 0.0266,
-#     2: 0.0601,
-#     3: 0.0570,
-#     4: 0.1370,
-#     5: 0.1704,
-#     6: 0.1085,
-#     7: 0.1364,
-#     8: 0.1011,
-#     9: 0.1021
-# }
 class_weights = class_weight.compute_class_weight('balanced',
                                                  classes=np.unique(y_train),
                                                  y=y_train)
 class_weights = dict(enumerate(class_weights))
-
 
 lr_reduction = ReduceLROnPlateau(monitor='val_loss',
                                  patience=3,
