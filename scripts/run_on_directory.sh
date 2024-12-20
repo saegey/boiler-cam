@@ -22,7 +22,7 @@ for img in "$INPUT_DIR"/*.jpg "$INPUT_DIR"/*.jpeg "$INPUT_DIR"/*.png; do
 	[ -e "$img" ] || continue
 
 	echo "Processing: $img"
-	python magic.py "$img"
+	python process_photo.py "$img"
 
 	# If you want to break on errors, you can check the exit status:
 	if [ $? -ne 0 ]; then
